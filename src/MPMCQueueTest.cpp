@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2016 Erik Rigtorp <erik@rigtorp.se>
+Copyright (c) 2018 Erik Rigtorp <erik@rigtorp.se>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
  */
 
-#include "MPMCQueue.h"
 #include <cassert>
 #include <chrono>
 #include <iostream>
+#include <rigtorp/MPMCQueue.h>
 #include <set>
 #include <thread>
 #include <vector>
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     bool throws = false;
     try {
       MPMCQueue<int> q(0);
-    } catch (std::exception &e) {
+    } catch (std::exception &) {
       throws = true;
     }
     assert(throws == true);
@@ -145,8 +145,8 @@ int main(int argc, char *argv[]) {
   // Fuzz test
   {
     const uint64_t numOps = 1000;
-    const int numThreads = 10;
-    MPMCQueue<int> q(numThreads);
+    const uint64_t numThreads = 10;
+    MPMCQueue<uint64_t> q(numThreads);
     std::atomic<bool> flag(false);
     std::vector<std::thread> threads;
     std::atomic<uint64_t> sum(0);
@@ -165,7 +165,7 @@ int main(int argc, char *argv[]) {
           ;
         uint64_t threadSum = 0;
         for (auto j = i; j < numOps; j += numThreads) {
-          int v;
+          uint64_t v;
           q.pop(v);
           threadSum += v;
         }

@@ -1,5 +1,5 @@
 /*
-Copyright (c) 2017 Erik Rigtorp <erik@rigtorp.se>
+Copyright (c) 2018 Erik Rigtorp <erik@rigtorp.se>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -26,6 +26,7 @@ SOFTWARE.
 #include <cassert>
 #include <limits>
 #include <memory>
+#include <new> // std::hardware_destructive_interference_size
 #include <stdexcept>
 
 namespace rigtorp {
@@ -71,7 +72,7 @@ public:
            "sharing between adjacent slots");
     assert(reinterpret_cast<char *>(&tail_) -
                    reinterpret_cast<char *>(&head_) >=
-               kCacheLineSize &&
+               static_cast<std::ptrdiff_t>(kCacheLineSize) &&
            "head and tail must be a cache line apart to prevent false sharing");
   }
 
@@ -181,7 +182,12 @@ private:
 
   constexpr size_t turn(size_t i) const noexcept { return i / capacity_; }
 
-  static constexpr size_t kCacheLineSize = 128;
+#ifdef __cpp_lib_hardware_interference_size
+  static constexpr size_t kCacheLineSize =
+      std::hardware_destructive_interference_size;
+#else
+  static constexpr size_t kCacheLineSize = 64;
+#endif
 
   struct Slot {
     ~Slot() noexcept {
@@ -218,4 +224,4 @@ private:
   alignas(kCacheLineSize) std::atomic<size_t> head_;
   alignas(kCacheLineSize) std::atomic<size_t> tail_;
 };
-}
+} // namespace rigtorp
